@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Smart City Analytics</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f9;
+      text-align: center;
+      padding: 40px;
+    }
+
+    .card {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      width: 400px;
+      margin: auto;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    button {
+      padding: 10px 20px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #0056b3;
+    }
+
+    .result {
+      margin-top: 20px;
+      font-size: 18px;
+    }
+
+    .risk-high { color: red; font-weight: bold; }
+    .risk-medium { color: orange; font-weight: bold; }
+    .risk-low { color: green; font-weight: bold; }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <h2>🚦 Smart City Analytics</h2>
+    <p>Consulta climática para previsão de congestionamento</p>
+
+    <button onclick="consultarClima()">Consultar Clima Atual</button>
+    <button id="btnExportar">Exportar Histórico (JSON)</button>
+
+    <div class="result" id="resultado"></div>
+  </div>
+
+  <script>
+    async function consultarClima() {
+      const latitude = -27.64;   // Palhoça/SC
+      const longitude = -48.67;
+
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true&hourly=precipitation`;
+
+      try {
+        const response = await fetch(url);
+        const data = await response.json();
+
+        const temperatura = data.current_weather.temperature;
+        const precipitacao = data.hourly.precipitation[0];
+
+        let risco = "";
+        let classe = "";
+
+        if (precipitacao > 8) {
+          risco = "🔴 Alto risco de congestionamento";
+          classe = "risk-high";
+        } else if (precipitacao > 3) {
+          risco = "🟡 Médio risco de congestionamento";
+          classe = "risk-medium";
+        } else {
+          risco = "🟢 Baixo risco de congestionamento";
+          classe = "risk-low";
+        }
+
+        document.getElementById("resultado").innerHTML = `
+          🌡 Temperatura: ${temperatura}°C <br>
+          🌧 Precipitação: ${precipitacao} mm <br><br>
+          <span class="${classe}">${risco}</span>
+        `;
+
+      } catch (error) {
+        document.getElementById("resultado").innerHTML =
+          "Erro ao consultar API.";
+      }
+    }
+  </script>
+
+</body>
+</html>
