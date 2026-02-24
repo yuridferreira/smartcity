@@ -1,6 +1,4 @@
-export async function getWeatherData() {
-  const latitude = -27.64;
-  const longitude = -48.67;
+export async function getWeatherData(latitude, longitude) {
 
   const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true&hourly=precipitation`;
 

@@ -1,9 +1,8 @@
-export function saveRawData(weather, traffic) {
+export function saveRawData(data) {
 
   const rawEntry = {
     timestamp: new Date().toISOString(),
-    weather,
-    traffic
+    ...data
   };
 
   const existing = JSON.parse(localStorage.getItem("rawData")) || [];
@@ -12,12 +11,11 @@ export function saveRawData(weather, traffic) {
   localStorage.setItem("rawData", JSON.stringify(existing));
 }
 
-
-export function saveAnalyticsData(analysis) {
+export function saveAnalyticsData(data) {
 
   const analyticsEntry = {
     timestamp: new Date().toISOString(),
-    analysis
+    ...data
   };
 
   const existing = JSON.parse(localStorage.getItem("analyticsData")) || [];
@@ -25,7 +23,6 @@ export function saveAnalyticsData(analysis) {
 
   localStorage.setItem("analyticsData", JSON.stringify(existing));
 }
-
 
 export function getHistory() {
   return {

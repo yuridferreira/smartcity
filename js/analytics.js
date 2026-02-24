@@ -1,29 +1,43 @@
-export function getTrafficSensorData() {
+export function analyzeTraffic(weather, traffic) {
 
-  // Define cenário aleatório
-  const scenario = Math.random();
+  // Cruzamento: 2 faixas
+  const baseCapacityPerLane = 1800;
+  const lanes = 2;
 
-  let vehicleCount;
-  let avgSpeed;
+  let realCapacity = baseCapacityPerLane * lanes;
 
-  if (scenario < 0.33) {
-    // Fluxo leve
-    vehicleCount = Math.floor(Math.random() * 10000) + 5000;
-    avgSpeed = Math.floor(Math.random() * 40) + 40; // 40–80 km/h
+  // Redução se estiver chovendo
+  if (weather.precipitation > 0) {
+    realCapacity *= 0.8;
+  }
 
-  } else if (scenario < 0.66) {
-    // Fluxo moderado
-    vehicleCount = Math.floor(Math.random() * 30000) + 20000;
-    avgSpeed = Math.floor(Math.random() * 20) + 20; // 20–40 km/h
+  // Densidade
+  const density = traffic.vehicleCount / traffic.avgSpeed;
 
-  } else {
-    // Fluxo pesado
-    vehicleCount = Math.floor(Math.random() * 50000) + 50000;
-    avgSpeed = Math.floor(Math.random() * 15) + 5; // 5–20 km/h
+  // Saturação
+  const saturation = traffic.vehicleCount / realCapacity;
+
+  let riskLevel;
+  let averageDelay;
+
+  if (saturation < 0.7) {
+    riskLevel = "BAIXO";
+    averageDelay = 10;
+  } 
+  else if (saturation < 1) {
+    riskLevel = "MÉDIO";
+    averageDelay = 30;
+  } 
+  else {
+    riskLevel = "ALTO";
+    averageDelay = 60;
   }
 
   return {
-    vehicleCount,
-    avgSpeed
+    realCapacity: Math.round(realCapacity),
+    saturation: saturation.toFixed(2),
+    averageDelay,
+    riskLevel,
+    density: density.toFixed(2)
   };
 }

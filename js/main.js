@@ -1,62 +1,107 @@
-import { getWeatherData } from './api.js';
-import { getTrafficSensorData } from './sensors.js';
-import { analyzeTraffic } from './analytics.js';
-import { saveRawData, saveAnalyticsData } from './storage.js';
-import { exportToJSON } from './export.js';
+import { getWeatherData } from "./api.js";
+import { getTrafficSensorData } from "./sensores.js";
+import { analyzeTraffic } from "./analytics.js";
+import { saveRawData, saveAnalyticsData } from "./storage.js";
+import { exportToJSON } from "./export.js";
 
-// ===== BOTÃO CONSULTAR =====
-document.getElementById("btnConsultar")
-  .addEventListener("click", async () => {
+document.addEventListener("DOMContentLoaded", () => {
 
-    try {
+  console.log("✅ Main carregado");
 
-      // 1️⃣ Coleta dados
-      const weather = await getWeatherData();
-      const traffic = getTrafficSensorData();
+  // ==============================
+  // 📍 Função localização
+  // ==============================
+  function getUserLocation() {
+    return new Promise((resolve, reject) => {
 
-      console.log("Clima:", weather);
-      console.log("Tráfego:", traffic);
+      if (!navigator.geolocation) {
+        reject("Geolocalização não suportada.");
+      }
 
-      // 2️⃣ Salva dados brutos (Data Lake)
-      saveRawData(weather, traffic);
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          resolve({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude
+          });
+        },
+        () => {
+          reject("Permissão negada ou erro.");
+        }
+      );
+    });
+  }
 
-      // 3️⃣ Processa análise
-      const analysis = analyzeTraffic(weather, traffic);
+  // ==============================
+  // 🚦 Botão consultar
+  // ==============================
+  const btnConsultar = document.getElementById("btnConsultar");
+  const btnExportar = document.getElementById("btnExportar");
 
-      console.log("Análise:", analysis);
+  if (btnConsultar) {
+    btnConsultar.addEventListener("click", async () => {
 
-      // 4️⃣ Salva resultado analítico
-      saveAnalyticsData(analysis);
+      try {
 
-      // 5️⃣ Exibe resultado na interface
-      document.getElementById("resultado").innerHTML = `
-        <h3>🚦 Cruzamento Urbano - 2 Faixas / 2 Semáforos</h3>
+        const location = await getUserLocation();
 
-        🌡 Temperatura: ${weather.temperature}°C <br>
-        🌧 Precipitação: ${weather.precipitation} mm <br><br>
+        const weather = await getWeatherData(
+          location.latitude,
+          location.longitude
+        );
 
-        🚗 Fluxo estimado: ${traffic.vehicleCount} veículos/h <br>
-        🏎 Velocidade média: ${traffic.avgSpeed} km/h <br><br>
+        const traffic = getTrafficSensorData();
 
-        📊 Capacidade real da via: ${analysis.realCapacity} veículos/h <br>
-        📈 Taxa de saturação: ${analysis.saturation} <br>
-        ⚙ Densidade ajustada: ${analysis.density} <br>
-        ⏱ Atraso médio estimado: ${analysis.averageDelay} segundos <br><br>
+        saveRawData({
+          location,
+          weather,
+          traffic,
+          timestamp: new Date()
+        });
 
-        ⚠ <strong>Nível de risco: ${analysis.riskLevel}</strong>
-      `;
+        const analysis = analyzeTraffic(weather, traffic);
 
-    } catch (error) {
-      console.error("Erro:", error);
-      document.getElementById("resultado").innerHTML =
-        "Erro ao processar dados.";
-    }
+        saveAnalyticsData({
+          ...analysis,
+          timestamp: new Date()
+        });
 
-  });
+        document.getElementById("resultado").innerHTML = `
+          <strong>📍 Localização:</strong><br>
+          Lat: ${location.latitude.toFixed(4)}<br>
+          Lon: ${location.longitude.toFixed(4)}<br><br>
 
+          <strong>🌦 Clima:</strong><br>
+          Temperatura: ${weather.temperature}°C<br>
+          Precipitação: ${weather.precipitation} mm<br><br>
 
-// ===== BOTÃO EXPORTAR =====
-document.getElementById("btnExportar")
-  .addEventListener("click", () => {
-    exportToJSON();
-  });
+          <strong>🚗 Sensores:</strong><br>
+          Veículos/h: ${traffic.vehicleCount}<br>
+          Velocidade média: ${traffic.avgSpeed} km/h<br><br>
+
+          <strong>📊 Análise:</strong><br>
+          Capacidade real: ${analysis.realCapacity} veículos/h<br>
+          Saturação: ${analysis.saturation}<br>
+          Atraso médio: ${analysis.averageDelay} s<br>
+          <strong>Nível de risco: ${analysis.riskLevel}</strong>
+        `;
+
+      } catch (error) {
+        console.error(error);
+        document.getElementById("resultado").innerHTML =
+          "⚠ Permissão de localização necessária.";
+      }
+
+    });
+  }
+
+  // ==============================
+  // 📥 Botão exportar
+  // ==============================
+  if (btnExportar) {
+    btnExportar.addEventListener("click", () => {
+      exportToJSON();
+    });
+  }
+
+});
