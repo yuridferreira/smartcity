@@ -1,5 +1,4 @@
-import { getWeatherData } from "./api.js";
-import { getTrafficSensorData } from "./sensores.js";
+import { getWeatherData, getTrafficFromOSRM } from "./api.js";
 import { analyzeTraffic } from "./analytics.js";
 import { saveRawData, saveAnalyticsData } from "./storage.js";
 import { exportToJSON } from "./export.js";
@@ -8,14 +7,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
   console.log("✅ Main carregado");
 
+  const btnConsultar = document.getElementById("btnConsultar");
+  const btnExportar = document.getElementById("btnExportar");
+  const dashboard = document.getElementById("dashboard");
+  const riskContainer = document.getElementById("riskContainer");
+
   // ==============================
-  // 📍 Função localização
+  // 📍 Função Geolocalização
   // ==============================
   function getUserLocation() {
     return new Promise((resolve, reject) => {
 
       if (!navigator.geolocation) {
         reject("Geolocalização não suportada.");
+        return;
       }
 
       navigator.geolocation.getCurrentPosition(
@@ -25,23 +30,23 @@ document.addEventListener("DOMContentLoaded", () => {
             longitude: position.coords.longitude
           });
         },
-        () => {
-          reject("Permissão negada ou erro.");
+        (error) => {
+          reject("Permissão negada ou erro ao obter localização.");
         }
       );
     });
   }
 
   // ==============================
-  // 🚦 Botão consultar
+  // 🚦 BOTÃO CONSULTAR
   // ==============================
-  const btnConsultar = document.getElementById("btnConsultar");
-  const btnExportar = document.getElementById("btnExportar");
-
   if (btnConsultar) {
     btnConsultar.addEventListener("click", async () => {
 
       try {
+
+        dashboard.innerHTML = "⏳ Consultando dados...";
+        riskContainer.innerHTML = "";
 
         const location = await getUserLocation();
 
@@ -50,53 +55,71 @@ document.addEventListener("DOMContentLoaded", () => {
           location.longitude
         );
 
-        const traffic = getTrafficSensorData();
+        const traffic = await getTrafficFromOSRM(
+          location.latitude,
+          location.longitude
+        );
 
-        saveRawData({
-          location,
-          weather,
-          traffic,
-          timestamp: new Date()
-        });
+        // Salvar dados brutos
+        saveRawData(weather, traffic);
 
+        // Analisar
         const analysis = analyzeTraffic(weather, traffic);
 
-        saveAnalyticsData({
-          ...analysis,
-          timestamp: new Date()
-        });
+        // Salvar análise
+        saveAnalyticsData(analysis);
 
-        document.getElementById("resultado").innerHTML = `
-          <strong>📍 Localização:</strong><br>
-          Lat: ${location.latitude.toFixed(4)}<br>
-          Lon: ${location.longitude.toFixed(4)}<br><br>
+        // ==============================
+        // 🖥️ Renderização Dashboard
+        // ==============================
+        dashboard.innerHTML = `
+          <div class="card">
+            <h3>📍 Localização</h3>
+            <p>Lat: ${location.latitude.toFixed(4)}</p>
+            <p>Lon: ${location.longitude.toFixed(4)}</p>
+          </div>
 
-          <strong>🌦 Clima:</strong><br>
-          Temperatura: ${weather.temperature}°C<br>
-          Precipitação: ${weather.precipitation} mm<br><br>
+          <div class="card">
+            <h3>🌦 Clima</h3>
+            <p>Temperatura: ${weather.temperature}°C</p>
+            <p>Precipitação: ${weather.precipitation} mm</p>
+          </div>
 
-          <strong>🚗 Sensores:</strong><br>
-          Veículos/h: ${traffic.vehicleCount}<br>
-          Velocidade média: ${traffic.avgSpeed} km/h<br><br>
+          <div class="card">
+            <h3>🚗 Tráfego</h3>
+            <p>Velocidade média: ${traffic.avgSpeed} km/h</p>
+            <p>Tempo estimado: ${traffic.durationMin} min</p>
+            <p>Distância analisada: ${traffic.distanceKm} km</p>
+         </div>
 
-          <strong>📊 Análise:</strong><br>
-          Capacidade real: ${analysis.realCapacity} veículos/h<br>
-          Saturação: ${analysis.saturation}<br>
-          Atraso médio: ${analysis.averageDelay} s<br>
-          <strong>Nível de risco: ${analysis.riskLevel}</strong>
+          <div class="card">
+            <h3>📊 Análise</h3>
+            <p>Saturação: ${analysis.saturation}</p>
+            <p>Atraso médio: ${analysis.averageDelay}s</p>
+          </div>
+        `;
+
+        // ==============================
+        // 🔴 Indicador de Risco
+        // ==============================
+        riskContainer.innerHTML = `
+          <div class="risk ${analysis.riskLevel}">
+            NÍVEL DE RISCO: ${analysis.riskLevel}
+          </div>
         `;
 
       } catch (error) {
         console.error(error);
-        document.getElementById("resultado").innerHTML =
-          "⚠ Permissão de localização necessária.";
+
+        dashboard.innerHTML = "⚠ Erro ao consultar dados.";
+        riskContainer.innerHTML = "";
       }
 
     });
   }
 
   // ==============================
-  // 📥 Botão exportar
+  // 📥 BOTÃO EXPORTAR
   // ==============================
   if (btnExportar) {
     btnExportar.addEventListener("click", () => {

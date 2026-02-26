@@ -1,43 +1,31 @@
 export function analyzeTraffic(weather, traffic) {
 
-  // Cruzamento: 2 faixas
-  const baseCapacityPerLane = 1800;
-  const lanes = 2;
+  const idealSpeed = 60; // km/h ideal urbano
 
-  let realCapacity = baseCapacityPerLane * lanes;
+  // Índice baseado em redução de velocidade
+  const speedFactor = traffic.avgSpeed / idealSpeed;
 
-  // Redução se estiver chovendo
+  // Ajuste climático
+  let weatherFactor = 1;
+
   if (weather.precipitation > 0) {
-    realCapacity *= 0.8;
+    weatherFactor -= 0.2;
   }
 
-  // Densidade
-  const density = traffic.vehicleCount / traffic.avgSpeed;
-
-  // Saturação
-  const saturation = traffic.vehicleCount / realCapacity;
-
-  let riskLevel;
-  let averageDelay;
-
-  if (saturation < 0.7) {
-    riskLevel = "BAIXO";
-    averageDelay = 10;
-  } 
-  else if (saturation < 1) {
-    riskLevel = "MÉDIO";
-    averageDelay = 30;
-  } 
-  else {
-    riskLevel = "ALTO";
-    averageDelay = 60;
+  if (weather.temperature > 35) {
+    weatherFactor -= 0.1;
   }
+
+  const saturation = (1 - speedFactor) * weatherFactor;
+
+  let riskLevel = "BAIXO";
+
+  if (saturation > 0.7) riskLevel = "ALTO";
+  else if (saturation > 0.4) riskLevel = "MÉDIO";
 
   return {
-    realCapacity: Math.round(realCapacity),
     saturation: saturation.toFixed(2),
-    averageDelay,
-    riskLevel,
-    density: density.toFixed(2)
+    averageDelay: Math.max(0, (idealSpeed - traffic.avgSpeed) * 2).toFixed(0),
+    riskLevel
   };
 }
