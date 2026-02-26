@@ -6,56 +6,137 @@
 
   <style>
     body {
-      font-family: Arial, sans-serif;
-      background: #f4f6f9;
-      text-align: center;
-      padding: 40px;
+      margin: 0;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      color: #333;
     }
 
-    .card {
-      background: white;
+    .container {
+      background: #ffffff;
+      width: 95%;
+      max-width: 900px;
+      border-radius: 16px;
       padding: 30px;
-      border-radius: 10px;
-      width: 400px;
-      margin: auto;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 10px;
+      color: #1f2937;
+    }
+
+    p.subtitle {
+      text-align: center;
+      color: #6b7280;
+      margin-bottom: 25px;
+    }
+
+    .buttons {
+      text-align: center;
+      margin-bottom: 25px;
     }
 
     button {
-      padding: 10px 20px;
-      background: #007bff;
-      color: white;
+      padding: 12px 22px;
+      border-radius: 8px;
       border: none;
-      border-radius: 5px;
+      font-weight: 600;
       cursor: pointer;
       margin: 5px;
+      transition: 0.3s;
     }
 
-    button:hover {
-      background: #0056b3;
+    .primary {
+      background: #2563eb;
+      color: white;
     }
 
-    .result {
+    .primary:hover {
+      background: #1e40af;
+    }
+
+    .secondary {
+      background: #e5e7eb;
+      color: #111827;
+    }
+
+    .secondary:hover {
+      background: #d1d5db;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
       margin-top: 20px;
-      font-size: 16px;
     }
-  </style>
 
+    .card {
+      background: #f9fafb;
+      padding: 15px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    }
+
+    .card h3 {
+      margin-top: 0;
+      font-size: 16px;
+      color: #374151;
+    }
+
+    .card p {
+      margin: 4px 0;
+      font-size: 14px;
+    }
+
+    .risk {
+      text-align: center;
+      padding: 15px;
+      border-radius: 12px;
+      font-weight: bold;
+      font-size: 18px;
+      margin-top: 20px;
+    }
+
+    .ALTO {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+
+    .MÉDIO {
+      background: #fef9c3;
+      color: #92400e;
+    }
+
+    .BAIXO {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+  </style>
 </head>
 <body>
 
-  <div class="card">
-    <h2>🚦 Smart City Analytics</h2>
-    <p>Consulta climática e previsão de congestionamento</p>
+  <div class="container">
+    <h1>🚦 Smart City Analytics</h1>
+    <p class="subtitle">Monitoramento climático e previsão de congestionamento urbano</p>
 
-    <button id="btnConsultar">Consultar Clima Atual</button>
-    <button id="btnExportar">Exportar Histórico (JSON)</button>
+    <div class="buttons">
+      <button class="primary" id="btnConsultar">Consultar Agora</button>
+      <button class="secondary" id="btnExportar">Exportar Histórico</button>
+    </div>
 
-    <div class="result" id="resultado"></div>
+    <div class="grid" id="dashboard"></div>
+
+    <div id="riskContainer"></div>
   </div>
 
-  <!-- IMPORTANTE -->
- <script type="module" src="./js/main.js"></script>
-
+  <script type="module" src="./js/main.js"></script>
 </body>
 </html>
